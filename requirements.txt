@@ -1,0 +1,8 @@
+streamlit
+openai
+pypdf
+python-docx
+networkx
+pyvis
+rapidfuzz
+tiktoken

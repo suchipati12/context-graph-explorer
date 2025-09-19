@@ -1,1 +1,2 @@
-# context-graph-explorer
+# Context Graph Explorer
+See canvas for full content.
