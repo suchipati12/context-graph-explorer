@@ -15,6 +15,9 @@ from graph_utils import ConceptExtractor, GraphBuilder
 from pyvis.network import Network
 import networkx as nx
 
+# Check if running on Hugging Face Spaces
+IS_HUGGINGFACE = os.getenv("SPACE_ID") is not None
+
 # Configure Streamlit page
 st.set_page_config(
     page_title="Context Graph Explorer",
@@ -37,6 +40,11 @@ def main():
     # Header
     st.title("🔍 Context Graph Explorer")
     st.markdown("Upload a document and explore its concepts as an interactive graph")
+    
+    # Add Hugging Face specific info
+    if IS_HUGGINGFACE:
+        st.info("🤗 Running on Hugging Face Spaces! Add your OpenAI API key in the sidebar to get started.")
+    
     st.markdown("---")
     
     # Sidebar configuration
@@ -44,12 +52,18 @@ def main():
         st.header("⚙️ Configuration")
         
         # OpenAI API Key
+        # Check for environment variable first (for Hugging Face Spaces)
+        default_api_key = os.getenv("OPENAI_API_KEY", st.session_state.api_key)
+        
         api_key = st.text_input(
             "OpenAI API Key:",
             type="password",
-            value=st.session_state.api_key,
+            value=default_api_key,
             help="Enter your OpenAI API key to enable AI-powered concept extraction"
         )
+        
+        if IS_HUGGINGFACE and not api_key:
+            st.warning("⚠️ Please add your OpenAI API key to use the AI features. You can also set it as a Hugging Face Space secret.")
         
         if api_key != st.session_state.api_key:
             st.session_state.api_key = api_key

@@ -1,8 +1,8 @@
-streamlit
-openai
-pypdf
-python-docx
-networkx
-pyvis
-rapidfuzz
-tiktoken
+streamlit>=1.28.1
+openai>=1.0.0
+pypdf>=3.0.0
+python-docx>=0.8.11
+networkx>=3.0
+pyvis>=0.3.2
+rapidfuzz>=3.0.0
+tiktoken>=0.5.0
