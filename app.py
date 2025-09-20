@@ -103,6 +103,22 @@ def main():
             step=0.1,
             help="Adjust the size of nodes in the graph"
         )
+        
+        # Font size
+        font_size = st.slider(
+            "Font size:",
+            min_value=8,
+            max_value=24,
+            value=14,
+            help="Adjust the font size of node labels"
+        )
+        
+        # Node label display
+        show_node_labels = st.checkbox(
+            "Show node labels",
+            value=True,
+            help="Display concept names on nodes"
+        )
     
     # Main content area
     col1, col2 = st.columns([1, 2])
@@ -208,32 +224,62 @@ def main():
                 with col_stat3:
                     st.metric("Density", f"{stats['density']:.3f}")
             
+            # Graph display options
+            graph_height = st.selectbox(
+                "Graph height:",
+                options=["600px", "800px", "1000px", "1200px"],
+                index=1,
+                help="Select the height of the graph visualization"
+            )
+            
             # Create and display the graph
             try:
                 net = Network(
-                    height="600px",
+                    height=graph_height,
                     width="100%",
                     bgcolor="#ffffff",
                     font_color="black",
                     directed=True
                 )
                 
-                # Configure physics
+                # Configure physics and interaction
                 if physics_enabled:
-                    net.set_options("""
-                    var options = {
-                      "physics": {
+                    net.set_options(f"""
+                    var options = {{
+                      "physics": {{
                         "enabled": true,
-                        "stabilization": {"iterations": 100},
-                        "barnesHut": {"gravitationalConstant": -8000, "springConstant": 0.001}
-                      }
-                    }
+                        "stabilization": {{"iterations": 100}},
+                        "barnesHut": {{"gravitationalConstant": -8000, "springConstant": 0.001}}
+                      }},
+                      "interaction": {{
+                        "dragNodes": true,
+                        "dragView": true,
+                        "zoomView": true
+                      }},
+                      "nodes": {{
+                        "font": {{"size": {font_size}}}
+                      }},
+                      "edges": {{
+                        "font": {{"size": {max(8, font_size - 2)}}}
+                      }}
+                    }}
                     """)
                 else:
-                    net.set_options("""
-                    var options = {
-                      "physics": {"enabled": false}
-                    }
+                    net.set_options(f"""
+                    var options = {{
+                      "physics": {{"enabled": false}},
+                      "interaction": {{
+                        "dragNodes": true,
+                        "dragView": true,
+                        "zoomView": true
+                      }},
+                      "nodes": {{
+                        "font": {{"size": {font_size}}}
+                      }},
+                      "edges": {{
+                        "font": {{"size": {max(8, font_size - 2)}}}
+                      }}
+                    }}
                     """)
                 
                 # Add nodes
@@ -248,12 +294,16 @@ def main():
                     }
                     color = type_colors.get(node['type'], '#cccccc')
                     
+                    # Configure node label
+                    node_label = node['label'] if show_node_labels else ""
+                    
                     net.add_node(
                         node['id'],
-                        label=node['label'],
+                        label=node_label,
                         title=f"{node['title']}\nType: {node['type']}\nImportance: {node['importance']}",
                         size=int(node['size'] * node_size_factor),
-                        color=color
+                        color=color,
+                        font={'size': font_size, 'color': 'black'}
                     )
                 
                 # Add edges
@@ -275,7 +325,30 @@ def main():
                     with open(tmp_file.name, 'r', encoding='utf-8') as f:
                         html_content = f.read()
                     
-                    st.components.v1.html(html_content, height=600)
+                    # Display in expandable container
+                    with st.container():
+                        st.markdown("### 🌐 Interactive Graph")
+                        st.markdown("*Drag nodes, zoom, and pan to explore. Hover over nodes for details.*")
+                        
+                        # Convert height string to integer for st.components
+                        height_px = int(graph_height.replace('px', ''))
+                        st.components.v1.html(html_content, height=height_px, scrolling=True)
+                    
+                    # Add graph controls
+                    col_tip, col_download = st.columns([2, 1])
+                    with col_tip:
+                        st.info("💡 **Tip**: Use browser's fullscreen mode (F11) for better graph exploration!")
+                    with col_download:
+                        # Download graph as HTML
+                        st.download_button(
+                            label="📱 Download Graph HTML",
+                            data=html_content,
+                            file_name="concept_graph.html",
+                            mime="text/html",
+                            help="Download the graph as a standalone HTML file for full-screen viewing"
+                        )
+                    
+                    # Clean up temporary file
                     os.unlink(tmp_file.name)
                     
             except Exception as e:
